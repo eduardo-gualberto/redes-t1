@@ -45,6 +45,7 @@ def dados_recebidos(conexao, dados):
 def conexao_aceita(conexao):
     print(conexao, 'nova conexão')
     conexao.registrar_recebedor(dados_recebidos)
+    servidor.adicionar_nick(conexao, conexao.get_nick())
 
 
 servidor = Servidor(6667)
