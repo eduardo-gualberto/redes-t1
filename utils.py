@@ -1,4 +1,4 @@
-def tratar_ping(conexao, dados):
+def tratar_ping(dados):
     args = dados.split(b' ')
     if(len(args)==1):
         dados_env = b':server PONG server :'
