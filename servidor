@@ -2,10 +2,12 @@
 import asyncio
 from tcp import Servidor
 import re
-
+from utils import *
 
 def validar_nome(nome):
-    return re.match(br'^[a-zA-Z][a-zA-Z0-9_-]*$', nome) is not None
+    print(nome)
+    nome_b = nome.encode()
+    return re.match(br'^[a-zA-Z][a-zA-Z0-9_-]*$', nome_b) is not None
 
 
 def sair(conexao):
@@ -18,9 +20,13 @@ def dados_recebidos(conexao, dados):
         return sair(conexao)
     
     if dados.startswith(b'PING'):
-        args = dados.split(b' ')
-        conexao.enviar(b':server PONG server :' + args[1])
+        tratar_ping(conexao, dados)
     
+    if dados.startswith(b'NICK'):
+        new_nick = dados.split(b' ')[1].decode()
+        if validar_nome(new_nick) == False:
+            conexao.enviar(b'server 432 ' + conexao.get_nick().encode() + b' ' + new_nick.encode() + b' :Erroneous nickname')
+        tratar_nick_valido(servidor, conexao, new_nick)
 
     print(conexao, dados)
 
@@ -28,6 +34,7 @@ def dados_recebidos(conexao, dados):
 def conexao_aceita(conexao):
     print(conexao, 'nova conexão')
     conexao.registrar_recebedor(dados_recebidos)
+    servidor.adicionar_nick(conexao, conexao.get_nick())
 
 
 servidor = Servidor(6667)
