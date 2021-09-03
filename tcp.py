@@ -25,6 +25,7 @@ class Conexao:
     def __init__(self, accept_tuple, id):
         self.s, _ = accept_tuple
         self.nick = f'client{id}'
+        self.dados_residuais = b''  #conexao.dados_residuais guarda dados que não foram anteriormente enviados com \n
 
     def registrar_recebedor(self, callback):
         asyncio.get_event_loop().add_reader(self.s, lambda: callback(self, self.s.recv(8192)))
