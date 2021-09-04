@@ -17,7 +17,6 @@ def sair(conexao):
 def dados_recebidos(conexao, dados):
     if dados == b'':
         return sair(conexao)
-    print(b'DADOS: ' + dados)
     dados_separados = dados.split(b'\n')
     if(dados_separados[0] == b''): #verifica o caso em que o dado enviado é o proprio \n
         dados_separados[0] = b'\n' 
