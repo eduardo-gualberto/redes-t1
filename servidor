@@ -6,9 +6,7 @@ from utils import *
 
 
 def validar_nome(nome):
-    print(nome)
-    nome_b = nome.encode()
-    return re.match(br'^[a-zA-Z][a-zA-Z0-9_-]*$', nome_b) is not None
+    return re.match(br'^[a-zA-Z][a-zA-Z0-9_-]*$', nome) is not None
 
 
 def sair(conexao):
@@ -19,18 +17,30 @@ def sair(conexao):
 def dados_recebidos(conexao, dados):
     if dados == b'':
         return sair(conexao)
-    
-    if dados.startswith(b'PING'):
-        tratar_ping(conexao, dados)
-    
-    if dados.startswith(b'NICK'):
-        new_nick = dados.split(b' ')[1].decode()
-        if validar_nome(new_nick) == False:
-            conexao.enviar(b'server 432 ' + conexao.get_nick().encode() + b' ' + new_nick.encode() + b' :Erroneous nickname')
-        tratar_nick_valido(servidor, conexao, new_nick)
-
-    print(conexao, dados)
-
+    dados_separados = dados.split(b'\n')
+    if(dados_separados[0] == b''): #verifica o caso em que o dado enviado é o proprio \n
+        dados_separados[0] = b'\n' 
+    for i in range(0,len(dados_separados)-1):     
+        if(conexao.dados_residuais != b''): #verifica se há algum dados sem \n guardado no buffer
+            dados_env = conexao.dados_residuais + dados_separados[i]
+            print(dados_env)
+            conexao.dados_residuais = b''
+        else:
+            dados_env = dados_separados[i]
+        if(dados_env.startswith(b'PING')):
+            dados_env = tratar_ping(dados_env)
+        #implementaçao dos passos 3 e 4 em andamento no if abaixo
+        if dados.startswith(b'NICK'):
+            new_nick = dados.split(b' ')[1].decode()
+            if validar_nome(new_nick) == False:
+                conexao.enviar(b'server 432 ' + conexao.get_nick().encode() + b' ' + new_nick.encode() + b' :Erroneous nickname')
+            tratar_nick_valido(servidor, conexao, new_nick)
+        #############
+        print(conexao, dados)
+        conexao.enviar(dados_env + b'\n')
+        print(conexao,dados_env)
+    if(dados_separados[len(dados_separados)-1] != b''): #verifica se há dados a serem armazenados em conexao.dados_residuais
+        conexao.dados_residuais = conexao.dados_residuais + dados_separados[len(dados_separados)-1]
 
 def conexao_aceita(conexao):
     print(conexao, 'nova conexão')
