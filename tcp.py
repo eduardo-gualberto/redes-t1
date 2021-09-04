@@ -15,16 +15,21 @@ class Servidor:
         asyncio.get_event_loop().add_reader(self.s, lambda: callback(Conexao(self.s.accept(), self.nicks_i)))
 
     def adicionar_nick(self, conexao, nick):
-        self.nicks[nick] = conexao
+        self.nicks[nick.lower()] = conexao
 
     def mudar_nick_conexao(self, conexao, nick):
-        self.nicks[nick] = self.nicks.pop(conexao.get_nick())
+        self.nicks[nick.lower()] = self.nicks.pop(conexao.get_nick().lower())
         conexao.set_nick(nick)
+
+    def checa_nick_existe(self, nick):
+        return nick.lower() in self.nicks
 
 class Conexao:
     def __init__(self, accept_tuple, id):
+        self.initial_nick = True
+        self.id = id
         self.s, _ = accept_tuple
-        self.nick = f'client{id}'
+        self.nick = f'client{id}'.encode()
         self.dados_residuais = b''  #conexao.dados_residuais guarda dados que não foram anteriormente enviados com \n
 
     def registrar_recebedor(self, callback):
@@ -39,6 +44,13 @@ class Conexao:
 
     def set_nick(self, new_nick):
         self.nick = new_nick
+        self.initial_nick = False
     
     def get_nick(self):
         return self.nick
+
+    def get_id(self):
+        return self.id
+
+    def is_initial_nick(self):
+        return self.initial_nick

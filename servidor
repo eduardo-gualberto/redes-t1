@@ -31,13 +31,17 @@ def dados_recebidos(conexao, dados):
             dados_env = tratar_ping(dados_env)
         #implementaçao dos passos 3 e 4 em andamento no if abaixo
         if dados.startswith(b'NICK'):
-            new_nick = dados.split(b' ')[1].decode()
+            print(servidor.nicks)
+            new_nick = dados.split(b' ')[1].strip()
             if validar_nome(new_nick) == False:
-                conexao.enviar(b'server 432 ' + conexao.get_nick().encode() + b' ' + new_nick.encode() + b' :Erroneous nickname')
-            tratar_nick_valido(servidor, conexao, new_nick)
+                apelido_atual = conexao.get_nick() if not conexao.is_initial_nick() else b'*'
+                dados_env = b'server 432 ' + apelido_atual + b' ' + new_nick + b' :Erroneous nickname\r\n'
+            else:
+                dados_env = tratar_nick_valido(servidor, conexao, new_nick)
+            print(servidor.nicks)
         #############
         print(conexao, dados)
-        conexao.enviar(dados_env + b'\n')
+        conexao.enviar(dados_env)
         print(conexao,dados_env)
     if(dados_separados[len(dados_separados)-1] != b''): #verifica se há dados a serem armazenados em conexao.dados_residuais
         conexao.dados_residuais = conexao.dados_residuais + dados_separados[len(dados_separados)-1]
