@@ -1,6 +1,7 @@
 import socket
 import asyncio
 
+
 class Servidor:
     def __init__(self, porta):
         self.nicks = {}
@@ -11,11 +12,15 @@ class Servidor:
         s.listen(5)
 
     def registrar_monitor_de_conexoes_aceitas(self, callback):
-        asyncio.get_event_loop().add_reader(self.s, lambda: callback(Conexao(self.s.accept(), self.nicks_i)))
+        asyncio.get_event_loop().add_reader(
+            self.s, lambda: callback(Conexao(self.s.accept(), self.nicks_i)))
 
     def adicionar_nick(self, conexao, nick):
         self.nicks_i += 1
         self.nicks[nick.lower()] = conexao
+
+    def remover_nick_conexao(self, conexao):
+        self.nicks.pop(conexao.get_nick().lower())
 
     def mudar_nick_conexao(self, conexao, nick):
         self.nicks[nick.lower()] = self.nicks.pop(conexao.get_nick().lower())
@@ -24,16 +29,19 @@ class Servidor:
     def checa_nick_existe(self, nick):
         return nick.lower() in self.nicks
 
+
 class Conexao:
     def __init__(self, accept_tuple, id):
         self.initial_nick = True
         self.id = id
         self.s, _ = accept_tuple
         self.nick = f'client{id}'.encode()
-        self.dados_residuais = b''  #conexao.dados_residuais guarda dados que não foram anteriormente enviados com \n
+        # conexao.dados_residuais guarda dados que não foram anteriormente enviados com \n
+        self.dados_residuais = b''
 
     def registrar_recebedor(self, callback):
-        asyncio.get_event_loop().add_reader(self.s, lambda: callback(self, self.s.recv(8192)))
+        asyncio.get_event_loop().add_reader(
+            self.s, lambda: callback(self, self.s.recv(8192)))
 
     def enviar(self, dados):
         self.s.sendall(dados)
@@ -45,7 +53,7 @@ class Conexao:
     def set_nick(self, new_nick):
         self.nick = new_nick
         self.initial_nick = False
-    
+
     def get_nick(self):
         return self.nick
 

@@ -11,6 +11,7 @@ def validar_nome(nome):
 
 def sair(conexao):
     print(conexao, 'conexão fechada')
+    servidor.remover_nick_conexao(conexao)
     conexao.fechar()
 
 
@@ -18,10 +19,10 @@ def dados_recebidos(conexao, dados):
     if dados == b'':
         return sair(conexao)
     dados_separados = dados.split(b'\n')
-    if(dados_separados[0] == b''): #verifica o caso em que o dado enviado é o proprio \n
-        dados_separados[0] = b'\n' 
-    for i in range(0,len(dados_separados)-1):     
-        if(conexao.dados_residuais != b''): #verifica se há algum dados sem \n guardado no buffer
+    if(dados_separados[0] == b''):  # verifica o caso em que o dado enviado é o proprio \n
+        dados_separados[0] = b'\n'
+    for i in range(0, len(dados_separados)-1):
+        if(conexao.dados_residuais != b''):  # verifica se há algum dados sem \n guardado no buffer
             dados_env = conexao.dados_residuais + dados_separados[i]
             print(dados_env)
             conexao.dados_residuais = b''
@@ -34,15 +35,19 @@ def dados_recebidos(conexao, dados):
             new_nick = dados.split(b' ')[1].strip()
             if validar_nome(new_nick) == False:
                 apelido_atual = conexao.get_nick() if not conexao.is_initial_nick() else b'*'
-                dados_env = b':server 432 ' + apelido_atual + b' ' + new_nick + b' :Erroneous nickname\r\n'
+                dados_env = b':server 432 ' + apelido_atual + \
+                    b' ' + new_nick + b' :Erroneous nickname\r\n'
             else:
                 dados_env = tratar_nick_valido(servidor, conexao, new_nick)
             print(servidor.nicks)
         print(conexao, dados)
         conexao.enviar(dados_env)
-        print(conexao,dados_env)
-    if(dados_separados[len(dados_separados)-1] != b''): #verifica se há dados a serem armazenados em conexao.dados_residuais
-        conexao.dados_residuais = conexao.dados_residuais + dados_separados[len(dados_separados)-1]
+        print(conexao, dados_env)
+    # verifica se há dados a serem armazenados em conexao.dados_residuais
+    if(dados_separados[len(dados_separados)-1] != b''):
+        conexao.dados_residuais = conexao.dados_residuais + \
+            dados_separados[len(dados_separados)-1]
+
 
 def conexao_aceita(conexao):
     print(conexao, 'nova conexão')
