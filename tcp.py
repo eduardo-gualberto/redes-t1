@@ -11,10 +11,10 @@ class Servidor:
         s.listen(5)
 
     def registrar_monitor_de_conexoes_aceitas(self, callback):
-        self.nicks_i += 1
         asyncio.get_event_loop().add_reader(self.s, lambda: callback(Conexao(self.s.accept(), self.nicks_i)))
 
     def adicionar_nick(self, conexao, nick):
+        self.nicks_i += 1
         self.nicks[nick.lower()] = conexao
 
     def mudar_nick_conexao(self, conexao, nick):
