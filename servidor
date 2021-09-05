@@ -10,9 +10,11 @@ def validar_nome(nome):
 
 
 def sair(conexao):
+    print(servidor.nicks)
     print(conexao, 'conexão fechada')
     servidor.remover_nick_conexao(conexao)
     conexao.fechar()
+    print(servidor.nicks)
 
 
 def dados_recebidos(conexao, dados):
@@ -28,8 +30,11 @@ def dados_recebidos(conexao, dados):
             conexao.dados_residuais = b''
         else:
             dados_env = dados_separados[i]
+            
+        # TRATAMENTO 'PING'
         if(dados_env.startswith(b'PING')):
             dados_env = tratar_ping(dados_env)
+        # TRATAMENTO 'NICK'
         if dados.startswith(b'NICK'):
             print(servidor.nicks)
             new_nick = dados.split(b' ')[1].strip()
@@ -40,6 +45,22 @@ def dados_recebidos(conexao, dados):
             else:
                 dados_env = tratar_nick_valido(servidor, conexao, new_nick)
             print(servidor.nicks)
+        # TRATAMENTO 'JOIN'
+        if dados.startswith(b'JOIN'):
+            print(servidor.channels)
+            channel_name = dados.split(b' ')[1].strip()
+            if validar_nome(channel_name[1:]) == False:
+                dados_env = b':server 403 %s :No such channel\r\n' % channel_name
+            else:
+                dados_env = tratar_join_valido(servidor, conexao, channel_name)
+            print(servidor.channels)
+        # TRATAMENTO 'PART'
+        if dados.startswith(b'PART'):
+            print(servidor.channels)
+            channel_name = dados.split(b' ')[1].strip()
+            dados_env = tratar_part(servidor, conexao, channel_name)
+            print(servidor.channels)
+
         print(conexao, dados)
         conexao.enviar(dados_env)
         print(conexao, dados_env)

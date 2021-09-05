@@ -19,3 +19,17 @@ def tratar_nick_valido(servidor, conexao, nick):
         dados_env = f":{conexao.get_nick().decode()} NICK {nick.decode()}\r\n".encode()
         servidor.mudar_nick_conexao(conexao, nick)
     return dados_env
+
+def tratar_join_valido(servidor, conexao, channel):
+    dados_env = ""
+    servidor.incluir_conexao_canal(conexao, channel)
+    # melhorar (quando PRIVMSG estiver pronto) para enviar pra todos os usuários que já estão no canal
+    dados_env = f":{conexao.get_nick().decode()} JOIN :{channel.decode()}\r\n".encode()
+    return dados_env
+
+def tratar_part(servidor, conexao, channel):
+    dados_env = ""
+    servidor.remover_conexao_canal(conexao, channel)
+    # melhorar (quando PRIVMSG estiver pronto) para enviar pra todos os usuários que estão no canal
+    dados_env = f":{conexao.get_nick().decode()} PART {channel.decode()}\r\n".encode()
+    return dados_env

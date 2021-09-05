@@ -5,6 +5,7 @@ import asyncio
 class Servidor:
     def __init__(self, porta):
         self.nicks = {}
+        self.channels = {}
         self.nicks_i = 0
         s = self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -28,6 +29,21 @@ class Servidor:
 
     def checa_nick_existe(self, nick):
         return nick.lower() in self.nicks
+
+    def incluir_conexao_canal(self, conexao, channel):
+        if channel.lower() in self.channels:
+            self.channels[channel.lower()].append(conexao)
+        else:
+            self.channels[channel.lower()] = [conexao]
+    
+    def remover_conexao_canal(self, conexao, channel):
+        nick_conexao = conexao.get_nick().lower()
+        channel_name = channel.lower()
+        if channel_name in self.channels:
+            for con in self.channels[channel_name]:
+                curr_con_name = con.get_nick().lower()
+                if curr_con_name == nick_conexao:
+                    self.channels[channel_name].remove(con)
 
 
 class Conexao:
