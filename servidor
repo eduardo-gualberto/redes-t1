@@ -45,6 +45,16 @@ def dados_recebidos(conexao, dados):
             else:
                 dados_env = tratar_nick_valido(servidor, conexao, new_nick)
             print(servidor.nicks)
+           #Tratamento PRIVMSG
+        if(dados.startswith(b'PRIVMSG')):
+            dados_msg = dados.split(b' ')
+            nick_conexao = dados_msg[1]
+            msg = dados_msg[2]
+            if(nick_conexao in servidor.nicks):
+                remetente = conexao.nick
+                conexao = servidor.nicks[nick_conexao]
+                dados_env = b':%s PRIVMSG %s %s\r\n' % (remetente, conexao.nick, msg)
+                #conexao_env.enviar(privmsg)    
         # TRATAMENTO 'JOIN'
         if dados.startswith(b'JOIN'):
             print(servidor.channels)
