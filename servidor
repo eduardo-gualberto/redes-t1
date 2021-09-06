@@ -55,16 +55,32 @@ def dados_recebidos(conexao, dados):
             dados_msg = dados_separados[i].split(b' ')
             nick_conexao = dados_msg[1]
             msg = dados_msg[2] + b'\n'
-            if(nick_conexao.lower() in servidor.nicks):
-                remetente = conexao.nick
-                conexao = servidor.nicks[nick_conexao.lower()]
-                dados_env = b':%s PRIVMSG %s %s' % (remetente, conexao.nick, msg)
-                #conexao_env.enviar(privmsg) 
-                conexao.enviar(dados_env)
-                print(conexao, dados_env) 
+            if(nick_conexao.startswith(b'#')):
+                if(nick_conexao.lower() in servidor.channels):
+                    remetente = conexao.nick
+                    for membro in servidor.channels[nick_conexao.lower()]:
+                        if(remetente != membro.nick):
+                            dados_env = b':%s PRIVMSG %s %s' % (remetente, nick_conexao, msg)
+                            membro.enviar(dados_env)
+                        else:
+                            pass
+                else:
+                    print("CANAL NAO EXISTE")
+                    print(nick_conexao.lower())
+                    pass
+                        
+
             else:
-                print("NICK NAO DISPONIVEL")
-                pass
+                if(nick_conexao.lower() in servidor.nicks):
+                    remetente = conexao.nick
+                    conexao = servidor.nicks[nick_conexao.lower()]
+                    dados_env = b':%s PRIVMSG %s %s' % (remetente, conexao.nick, msg)
+                    #conexao_env.enviar(privmsg) 
+                    conexao.enviar(dados_env)
+                    print(conexao, dados_env) 
+                else:
+                    print("NICK NAO DISPONIVEL")
+                    pass
 
         # TRATAMENTO 'JOIN'
         if dados.startswith(b'JOIN'):
