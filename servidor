@@ -12,6 +12,7 @@ def validar_nome(nome):
 def sair(conexao):
     print(conexao, 'conexão fechada')
     servidor.remover_nick_conexao(conexao)
+    servidor.remover_conexao_canal(conexao, b'*')
     conexao.fechar()
     print(servidor.nicks)
 
@@ -88,22 +89,18 @@ def dados_recebidos(conexao, dados):
             channel_name = dados.split(b' ')[1].strip()
             if validar_nome(channel_name[1:]) == False:
                 dados_env = b':server 403 %s :No such channel\r\n' % channel_name
+                conexao.enviar(dados_env)
             else:
-                dados_env = tratar_join_valido(servidor, conexao, channel_name)
+                tratar_join_valido(servidor, conexao, channel_name)
             print(servidor.channels)
-            conexao.enviar(dados_env)
             print(conexao,dados_env)
         # TRATAMENTO 'PART'
         if dados.startswith(b'PART'):
             print(servidor.channels)
             channel_name = dados.split(b' ')[1].strip()
-            print(channel_name)
-            dados_env = tratar_part(servidor, conexao, channel_name)
+            tratar_part(servidor, conexao, channel_name)
             print(servidor.channels)
-            conexao.enviar(dados_env)
-            for membro in servidor.channels[channel_name.lower()]:
-                membro.enviar(dados_env)
-                print(conexao, dados_env)
+            print(conexao, dados_env)
     # verifica se há dados a serem armazenados em conexao.dados_residuais
     if(dados_separados[len(dados_separados)-1] != b''):
         conexao.dados_residuais = conexao.dados_residuais + \
