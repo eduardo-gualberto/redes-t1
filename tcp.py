@@ -35,15 +35,39 @@ class Servidor:
             self.channels[channel.lower()].append(conexao)
         else:
             self.channels[channel.lower()] = [conexao]
-    
+
     def remover_conexao_canal(self, conexao, channel):
-        nick_conexao = conexao.get_nick().lower()
-        channel_name = channel.lower()
-        if channel_name in self.channels:
-            for con in self.channels[channel_name]:
-                curr_con_name = con.get_nick().lower()
-                if curr_con_name == nick_conexao:
-                    self.channels[channel_name].remove(con)
+        if channel == b'*':
+            msg_list = []
+            for c in self.channels:
+                try:
+                    i = self.channels[c].index(conexao)
+                    self.channels[c].pop(i)
+                    c_cons = self.get_channel_users(c).copy()
+                    for con in c_cons:
+                        msg_list.append(con)
+                except:
+                    continue
+            msg_list = list(set(msg_list))
+            msg = f":{conexao.get_nick().decode()} QUIT :Connection closed\r\n".encode()
+            for con in msg_list:
+                con.enviar(msg)
+                                         
+        else:
+            nick_conexao = conexao.get_nick().lower()
+            channel_name = channel.lower()
+            if channel_name in self.channels:
+                for con in self.channels[channel_name]:
+                    curr_con_name = con.get_nick().lower()
+                    if curr_con_name == nick_conexao:
+                        self.channels[channel_name].remove(con)
+                        break
+
+    def get_channel_users(self, channel):
+        if channel.lower() in self.channels:
+            return self.channels[channel.lower()]
+        else:
+            return []
 
 
 class Conexao:
