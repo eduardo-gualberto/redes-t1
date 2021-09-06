@@ -10,7 +10,6 @@ def validar_nome(nome):
 
 
 def sair(conexao):
-    print(servidor.nicks)
     print(conexao, 'conexão fechada')
     servidor.remover_nick_conexao(conexao)
     conexao.fechar()
@@ -18,26 +17,30 @@ def sair(conexao):
 
 
 def dados_recebidos(conexao, dados):
+
     if dados == b'':
         return sair(conexao)
     dados_separados = dados.split(b'\n')
+    print(conexao,dados)
     if(dados_separados[0] == b''):  # verifica o caso em que o dado enviado é o proprio \n
-        dados_separados[0] = b'\n'
+        dados_separados[0] = dados
     for i in range(0, len(dados_separados)-1):
         if(conexao.dados_residuais != b''):  # verifica se há algum dados sem \n guardado no buffer
-            dados_env = conexao.dados_residuais + dados_separados[i]
+            dados_env = conexao.dados_residuais + dados_separados[i] + b'\n'
             print(dados_env)
             conexao.dados_residuais = b''
         else:
             dados_env = dados_separados[i]
-            
+    
         # TRATAMENTO 'PING'
         if(dados_env.startswith(b'PING')):
             dados_env = tratar_ping(dados_env)
+            conexao.enviar(dados_env)
+            print(conexao, dados_env)
         # TRATAMENTO 'NICK'
-        if dados.startswith(b'NICK'):
-            print(servidor.nicks)
-            new_nick = dados.split(b' ')[1].strip()
+        if dados_env.startswith(b'NICK'):
+            print(dados_separados[i])
+            new_nick = dados_separados[i].split(b' ')[1].strip()
             if validar_nome(new_nick) == False:
                 apelido_atual = conexao.get_nick() if not conexao.is_initial_nick() else b'*'
                 dados_env = b':server 432 ' + apelido_atual + \
@@ -45,16 +48,24 @@ def dados_recebidos(conexao, dados):
             else:
                 dados_env = tratar_nick_valido(servidor, conexao, new_nick)
             print(servidor.nicks)
-           #Tratamento PRIVMSG
-        if(dados.startswith(b'PRIVMSG')):
-            dados_msg = dados.split(b' ')
+            conexao.enviar(dados_env)
+            print(conexao,dados_env)
+        #Tratamento PRIVMSG
+        if(dados_env.startswith(b'PRIVMSG')):
+            dados_msg = dados_separados[i].split(b' ')
             nick_conexao = dados_msg[1]
-            msg = dados_msg[2]
-            if(nick_conexao in servidor.nicks):
+            msg = dados_msg[2] + b'\n'
+            if(nick_conexao.lower() in servidor.nicks):
                 remetente = conexao.nick
-                conexao = servidor.nicks[nick_conexao]
-                dados_env = b':%s PRIVMSG %s %s\r\n' % (remetente, conexao.nick, msg)
-                #conexao_env.enviar(privmsg)    
+                conexao = servidor.nicks[nick_conexao.lower()]
+                dados_env = b':%s PRIVMSG %s %s' % (remetente, conexao.nick, msg)
+                #conexao_env.enviar(privmsg) 
+                conexao.enviar(dados_env)
+                print(conexao, dados_env) 
+            else:
+                print("NICK NAO DISPONIVEL")
+                pass
+
         # TRATAMENTO 'JOIN'
         if dados.startswith(b'JOIN'):
             print(servidor.channels)
@@ -64,16 +75,16 @@ def dados_recebidos(conexao, dados):
             else:
                 dados_env = tratar_join_valido(servidor, conexao, channel_name)
             print(servidor.channels)
+            conexao.enviar(dados_env)
+            print(conexao,dados_env)
         # TRATAMENTO 'PART'
         if dados.startswith(b'PART'):
             print(servidor.channels)
             channel_name = dados.split(b' ')[1].strip()
             dados_env = tratar_part(servidor, conexao, channel_name)
             print(servidor.channels)
-
-        print(conexao, dados)
-        conexao.enviar(dados_env)
-        print(conexao, dados_env)
+            conexao.enviar(dados_env)
+            print(conexao, dados_env)
     # verifica se há dados a serem armazenados em conexao.dados_residuais
     if(dados_separados[len(dados_separados)-1] != b''):
         conexao.dados_residuais = conexao.dados_residuais + \
@@ -84,7 +95,6 @@ def conexao_aceita(conexao):
     print(conexao, 'nova conexão')
     conexao.registrar_recebedor(dados_recebidos)
     servidor.adicionar_nick(conexao, conexao.get_nick())
-
 
 servidor = Servidor(6667)
 servidor.registrar_monitor_de_conexoes_aceitas(conexao_aceita)
